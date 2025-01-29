@@ -1,0 +1,13 @@
+pandas
+matplotlib
+numpy<2
+tqdm
+torch
+click
+scipy
+scikit-learn
+simplification
+dtaidistance
+
+plotly
+anywidget
