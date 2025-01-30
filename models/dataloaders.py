@@ -95,7 +95,7 @@ class LocationTimeBusDataLoader(torch.utils.data.Dataset):
         return len(self.data)
 
 
-class LocationTimeBusDataLoader(torch.utils.data.Dataset):
+class LocationTimeAvgSpeedBusDataLoader(torch.utils.data.Dataset):
     def __init__(self, csv_file):
         self.data = pd.read_csv(
             csv_file,

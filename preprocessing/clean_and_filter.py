@@ -53,7 +53,6 @@ def process(input_file, output_file):
 @click.argument('input_file', type=click.Path(exists=True))
 @click.argument('output_file', type=click.Path())
 def create_ride_groups(input_file, output_file):
-    #
     print("Processing {}".format(input_file))
 
     df = pd.read_csv(
