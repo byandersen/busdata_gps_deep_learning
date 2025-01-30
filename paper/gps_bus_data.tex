@@ -45,7 +45,7 @@
     \end{figure}
 
 
-    Die Busradar-Webseite\citep{busradarweb} bietet den Flensburgern einen Weg, live die Standorte aller Linienbusse
+    Die Busradar-Webseite bietet den Flensburgern einen Weg, live die Standorte aller Linienbusse
     nachzuverfolgen. Dabei greift die Webseite auf eine eigene API zu, bei der sie im 5-Sekunden-Takt neue Standortdaten
     anfragt. Die API stellt diese Daten im JSON-Format zur Verfügung. Sie beinhaltet für jedes Fahrzeug, welches Daten
     zur Verfügung stellt, Positionsdaten, Linien- und Zielinformationen, eine Fahrzeug-ID sowie einen Zeitstempel. Zudem
@@ -74,9 +74,10 @@
 
 
     \paragraph
-    Durch eine visuelle Darstellung ist es mir gelungen, die Daten effektiv in Fahrten einzuteilen. Die Rohdaten gaben
-    nur an, wann welcher Bus wo war, ohne eine Abgrenzung pro Fahrt. Eine Gruppierung in Fahrten ermöglicht mir jedoch
-    eine bessere Vorverarbeitung, da ich nicht nur auf einzelne Punkte, sondern auf ganze Fahrten achten kann.
+    Durch eine visuelle Darstellung ist es mir gelungen, die Daten effektiv in Fahrten einzuteilen. Die Rohdaten
+    enthalten nur Informationen darüber, wann welcher Bus sich an welchem Ort befand, jedoch ohne eine Unterscheidung
+    zwischen den einzelnen Fahrten. Eine Gruppierung in Fahrten ermöglicht mir jedoch eine bessere Vorverarbeitung, da
+    ich nicht nur auf einzelne Punkte, sondern auf ganze Fahrten achten kann.
 
     Eine Darstellung\ref{fig:analyse} aller Einträge im Zeitverlauf eines Tages, gegenüber der Fahrzeug-ID sowie dem
     Ziel, zeigt, dass wir mit diesen drei Attributen die Daten erfolgreich in Fahrten aufteilen können.
@@ -190,15 +191,15 @@
     benutze ein Limit von 200 Paaren pro Fahrt, um meinen Datensatz nicht explodieren zu lassen, da ich pro Fahrt
     $n^2$ viele Paare bilden könnte. Mit 200 Paaren erstelle ich nur einen Datensatz mit $4,5$ Millionen Einträgen.
 
-    
-    Zudem erstelle ich einen Train/Validation-Split, der anhand von Fahrten aufgeteilt wird. Dadurch werden keine 
-    Teilstücke aus einer Fahrt in beiden Trainings- und Validierungsdaten enthalten sein. Ich nutze einen Split von 
-    70/30. Da die Anzahl der Fahrten pro Gruppe in meinem Datensatz nicht ausgewogen ist, splitte ich meinen Datensatz 
-    für jede Gruppe separat mit einem 70/30-Verhältnis. Leider ist mir erst sehr spät aufgefallen, dass die Inbalance 
-    einen negativen Effekt auf mein Training haben könnte. Alle trainierten Netze wurden mit diesem Datensatz trainiert. 
+
+    Zudem erstelle ich einen Train/Validation-Split, der anhand von Fahrten aufgeteilt wird. Dadurch werden keine
+    Teilstücke aus einer Fahrt in beiden Trainings- und Validierungsdaten enthalten sein. Ich nutze einen Split von
+    70/30. Da die Anzahl der Fahrten pro Gruppe in meinem Datensatz nicht ausgewogen ist, splitte ich meinen Datensatz
+    für jede Gruppe separat mit einem 70/30-Verhältnis. Leider ist mir erst sehr spät aufgefallen, dass die Inbalance
+    einen negativen Effekt auf mein Training haben könnte. Alle trainierten Netze wurden mit diesem Datensatz trainiert.
     Im Folgenden\ref{fig:gruppen_verteilung} ist die normalisierte Verteilung der Gruppen im Trainings- und
     Validierungssplit zu sehen.
-    
+
     \begin{figure}[h]
         \includegraphics[scale=0.35]{figures/fig5_gruppen_verteilung}
         \centering
@@ -210,14 +211,33 @@
     \section{Training}
     \label{sec:training}
 
-    Im Training habe ich zwei verschiedene MLP und verschiedenen Inputsdaten Trainiert und mit einander verglichen.
+    Im Training habe ich zwei verschiedene MLPs und drei verschiedene Eingabedatensätze trainiert und miteinander
+    verglichen. Dabei habe ich ein einfaches MLP-Netz mit $2$ Hidden Layers mit Größen von $128$ und $32$ sowie ein
+    komplexeres MLP-Netz mit $5$ Hidden Layers mit Größen von $128$, $256$, $64$, $128$, $32$ trainiert. Als Ausgabewert
+    habe ich die Differenz der last\_modified-Werte beider Positionen in Minuten verwendet. Als Grundeingabewerte habe
+    ich mittels eines Positionsfensters um Flensburg meine Positionswerte für Position1 und Position2 normalisierten
+    sowie eine als One-Hot-Vector angegebene Streckengruppe definiert. Des Weiteren habe ich ein Modell mit zusätzlichen
+    zeitlichen Informationen trainiert. Dabei habe ich den Wochentag als One-Hot-Vector und die normalisierten Werte von
+    Stunde,Minute und Sekunde als weitere Eingabewerte hinzugefügt. In dem dritten Modell gibt es zusätzlich zur Zeit
+    auch die Durchschnittsgeschwindigkeit. In der Darstellung\ref{fig:training_different_input} sind komplexe MLPs mit
+    den drei verschiedenen Eingabewerten verglichen. Die Netze wurden mittels Adam\cite{adamoptimizer}-Optimizer und
+    einer Learning Rate von $0.01$ trainiert. Als Loss habe ich den MSE verwendet, welcher auch in den drei Darstellungen
+    zu sehen ist.
+
 
     \begin{figure}[h]
         \includegraphics[scale=0.6]{figures/fig6_training_different_input_data}
         \centering
-        \caption{Trainieren mit gleichem complexem MLP jedoch mit Zeit und Durchschnittsgeschwindigkeit}
+        \caption{Das Training aller verschiedenen Eingabewerte erfolgte anhand des komplexen MLPs. 60 Epochen}
         \label{fig:training_different_input}
     \end{figure}
+
+    Zudem habe ich das komplexe MLP mit dem einfachen MLP anhand der Grundeingabewerte
+    verglichen\ref{fig:training_different_complexity}. Die ersten 10 Epochen des Losses des einfachen MLP mussten
+    nachträglich anhand der gespeicherten Modelle nachberechnet werden. Daher kommt es in den ersten 10 Epochen zu
+    leichten Abweichungen, da nicht der kontinuierliche Trainingsloss, sondern – wie beim Validierungsloss – alle Daten
+    erst nach dem Epochenende mit dem Modell berechnet wurden.
+
 
     \begin{figure}[h]
         \includegraphics[scale=0.6]{figures/fig7_training_different_mlp_complexity}
@@ -226,10 +246,13 @@
         \label{fig:training_different_complexity}
     \end{figure}
 
+    In der letzten Darstellung\ref{fig:training_simpler_mlp} ist das gesamte Training des einfachen MLPs über 150 Epochen dargestellt.
+    Interessant dabei ist, dass der Loss selbst nach 150 Epochen nicht unter 6,5 fällt.
+
     \begin{figure}[h]
         \includegraphics[scale=0.6]{figures/fig8_training_simpler_mlp}
         \centering
-        \caption{Ganzes Training des einfachen MLPs}
+        \caption{150 Epochen das einfache MLP}
         \label{fig:training_simpler_mlp}
     \end{figure}
 
@@ -239,9 +262,6 @@
 
     \bibliographystyle{plain}
     \begin{thebibliography}{10}
-
-        \bibitem{busradarweb}
-        https://www.busradar-flensburg.de/
 
         \bibitem{ester1996dbscan}
         Martin Ester, Hans-Peter Kriegel, Jörg Sander, Xiaowei Xu
@@ -267,6 +287,11 @@
         Daniel Müller
         \newblock Modern hierarchical, agglomerative clustering algorithms
         \newblock {\em arXiv arXiv:1109.2378}, 2011.
+
+        \bibitem{adamoptimizer}
+        Diederik P. Kingma, Jimmy Ba
+        \newblock Adam: A Method for Stochastic Optimization
+        \newblock {\em arXiv arXiv:1412.6980}, 2014.
 
     \end{thebibliography}
 
